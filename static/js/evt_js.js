@@ -1,7 +1,7 @@
 var json_response = null;
 
 function get_event(){$.ajax({
-    url: '/get_evt_test',
+    url: '/get_evt',
     type: 'GET',
     contentType: "application/json; charset=utf-8",
     success: function(data_series) {
