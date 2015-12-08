@@ -1,0 +1,65 @@
+<html>
+<head>
+<title>About pLUX</title>
+</head>
+<body>
+<h1>pLUX</h1>
+pLUX is a tool for the LUX experiment designed to take in user classification of pulses found by the TransparentRubicsCube pulse finding algorithm. Normally, these pulses are classified by plotting reduced pulse quantities such as pulse area, pulse width and prompt fraction against each other and drawing population boundary lines in the various parameter spaces. This accomplishes the task of separating populations that are distinctly different but can have issues in "contested" regions.
+<p>
+pLUX seeks to ultimately replace the need for user defined parameter space cuts. Reduced pulse quantities along with the user pulse classification truth values will be fed into a classification machine learning algorithm (specific algorithm to be determined, from scikit-learn). Currently, we are implementing 11 different classifications, as follows:
+
+<ol>
+<li>
+S1. These pulses are the prompt response in the dual-phase detector and are due to the immediate scintillation of the xenon dimer following an energy deposition. They are characterized by their sharp rise time and fast decaying tail (lasting on the order of 100's of nanoseconds).
+</li>
+<li>
+S2. These pulses are the delayed response in the dual-phase detector. They are formed by the electro-luminescence of the gas phase xenon. The electrons released by a particle interaction in the liquid phase will drift up to the gate in a high electric field and will then be extracted from the liquid phase into the gas phase using a high electric field between the anode and gate. The extracted electrons have high kinetic energy causing the gas phase xenon to electro-luminesce. This form of amplification allows a single extracted electron to liberate roughly 20-30 detectable photons. 
+</li>
+<li>
+SPHE. The so-called single photo electron. These pulses form a class that is characterized by the response of the photomultiplier tube to a single photon.
+</li>
+<li>
+SE. A single electron pulse. These are essentially a sub-class of the S2 pulse but are treated separately to allow for ease of use.
+</li>
+<li>
+e-train. The electron train. This pulse type is characterized by a series of many single electrons pulses following a large S2. These pulses can last for as long as 10 milliseconds.
+</li>
+<li>
+e-burp. The electron burp. A very large (100s-1000s) of electron burst following a large S2.
+</li>
+<li>
+multi-S2. A multiple S2. These are most likely seen in cases where the pulse finding algorithm failed to split independent S2 pulses that were too close to each other in time.
+</li>
+<li>
+gas-S2. A gas event is characterized by a very short time difference between the S1 and S2 signal, indicating that the energy deposition occurred in the gas phase of the detector.
+</li>
+<li>
+rfrs1. The reverse-field region S1. Also known as a "gamma-X", this pulse type occurs when an interaction occurs beneath the cathode. Electrons are not able to drift into the extraction region and are thus lost. The pulse is characterized by an S1, localized to 1 or just a few PMTs in the bottom PMT array.
+</li>
+<li>
+noise. Baseline noise due to a variety of reasons.
+</li>
+<li>
+¯\_(ツ)_/¯. The "I don't know" category. The is used when the user has no idea what to categorize the event under.
+</li>
+</ol>
+
+<h1>Site design</h1>
+The pLUX website is hosted at UC Davis and run by a Python Flask webserver. The classification values are stored in a MySQL database. The website uses the D3.js library for plotting waveforms and the PMT hitmap and make use of the JQuery library for various utilities, such as asynchronous calls with ajax().
+<p>
+When the user loads a new page, refreshes the current page, or classifies the currently displayed event, the server runs a Python script that returns a random sumPOD from a LUX .evt file. The random pulse is found by scanning the directory that stores the .evt files and selecting a random file. Once the file is opened, a random event number from the file is chosen. Following that, a random pulse number (all events store 10 pulses regardless of there being less than 10 pulses present). Once a pulse is chose, the .rq file containing the reduced pulse quantities is opened and necessary values are extracted.
+<p>
+We next undergo two checks simultaneously.
+<ol>
+  <li>If a pulse does not actually exist for the chosen pulse number, a new random pulse number is chosen until a pulse is actually found for that event. 
+  </li>
+  <li>
+  A simple filter is implemented. There are many, many more single photo-electron pulses present in our data than large S2 pulses. To alleviate user frustration and to acquire a more feature rich classification dataset, a simple algorithm based on pulse area is used to artificially reduce the number of the more common pulse types seen by the end user.
+  </li>
+</ol>
+
+Once these conditions have been met, the pulse waveform and reduced quantity data is encapsulated and passed to the web front-end. The user then selects the most appropriate classification value using the buttons on the bottom of the site. The classification information is sent back to the server, along with all the information necessary to tag that specific pulse. This information is stored in the database along with any other user provided information like user name, email address, and any notes regarding the specific pulse.
+<p>
+In order to spur user contributions, a leader board was created allowing users to compete with each by ranking the users with the most classifications. A effort is underway to incorporate an agreement rate, promoting users who not only classify many pulses but also make sure to classify them well, or at least consistently.
+</body>
+</html>

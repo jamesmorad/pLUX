@@ -1,0 +1,31 @@
+<html>
+  <head>
+    <title>pLUX Leaderboard -- see who's winning!</title>
+    <style>
+      table, th, td {
+                    border: 1px solid black;
+                    border-collapse: collapse;
+                    }
+      th, td {
+              padding: 5px;
+              }
+      th {
+          text-align: left;
+        }
+    </style>
+  </head>
+  <body>
+    <h1> Current standings in number of pLUX classifications</h1>
+    <table>
+      <tr>
+        <th>Username</th>
+        <th># of pulses classified</th>
+      </tr>
+    {% for user in user_stats %}
+      <tr>
+        <td>{{user.username}}</td><td>{{user.stats}}</td>
+      <tr>
+    {% endfor %}
+    </table>
+  </body>
+</html>

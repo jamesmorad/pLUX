@@ -1,0 +1,49 @@
+ h1, h2, h3, h4 {
+            text-align: center;
+ }
+body {
+  font: 14px sans-serif;
+}
+
+.axis path,
+.axis line {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+
+.grid path,
+.grid line {
+  fill: none;
+  stroke: rgba(0, 0, 0, 0.25);
+  shape-rendering: crispEdges;
+}
+
+.x.axis path {
+  display: none;
+}
+
+.line {
+  fill: none;
+  stroke-width: 2.5px;
+}
+
+svg {
+      display: block;
+      margin: 0 auto;
+}
+
+.row-bottom-margin { margin-bottom:10px; }
+
+/*http://stackoverflow.com/questions/24539197/bootstrap-3-align-text-to-bottom-of-div*/
+@media (min-width: 768px ) {
+  .row {
+      position: relative;
+  }
+
+  .bottom-align-text {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+  }
+}

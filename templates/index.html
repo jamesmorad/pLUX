@@ -1,0 +1,280 @@
+<!--Add our necessary js libs-->
+<script src="static/js/jquery-1.11.3.min.js"></script>
+<script src="static/js/d3.js"></script>
+<script src="static/js/colorbar.js"></script>
+<script src="static/js/evt_js.js"></script>
+<!-- Throw in some styles -->
+<link rel="stylesheet" href="static/css/bootstrap.min.css">
+<link rel="stylesheet" href="static/css/mystylez.css">
+
+<!DOCTYPE html>
+<!-- For future rereference: -->
+<!-- D3.js chart taken from http://bl.ocks.org/crayzeewulf/9719255-->
+
+<meta charset="utf-8">
+
+<body>
+<div class="row-fluid row-bottom-margin">
+  <h2>pLUX</h2>
+  <h4>pulse classification guided by humans</h4>
+</div>
+<div class="container">
+
+  <div id="main" class="row-fluid row-bottom-margin"> 
+    <div class="col-md-2">
+      <form id="time_axis_form" action="">
+        <input type="radio" name="time_axis" value="10">samples<br>
+        <input type="radio" name="time_axis" value="1" checked="checked">ns
+      </form>
+      <table>
+        <tr>
+          <td>Please tell me a bit about yourself!</td>
+        </tr>
+        <tr>
+          <td><input type="text" id="email" placeholder="e-mail"></td>
+        </tr>
+        <tr>
+          <td><input type="text" id="name" placeholder="FirstName LastName"></td>
+        </tr>
+        <tr>
+          <td><div id="stats"></div></td>
+        </tr>
+      </table>
+      <div><a target="_blank" href="leaderboard">pLUX Leaderboard</a></div>
+      <p>
+      <p>
+      <table>
+        <tr>
+          <td>Notice something super freaky? Make a note before you click.</td>
+        </tr>
+        <tr>
+          <td><input type="text" id="notes"></td>
+        </tr>
+      </table>
+    </div>
+
+    <div id="graph_div" class="col-md-8 center-block">
+      <div id="graph"></div>
+      <div id="pods" style="display:none"><img src="static/james_is_lazy.png" width="680" height="480"></div>
+    </div>
+
+    <div class="col-md-2">
+      <div class="row row-bottom-margin">
+        <div id="more_button_div">
+          <button type="button" id="more_button" class="btn btn-primary">More</button>
+        </div>
+        <div id="less_button_div">
+          <button type="button" id="less_button" class="btn btn-primary">Less</button>
+        </div>
+      </div>
+      <div class="row row-bottom-margin">  
+        <div id="rqs">
+          <table>
+            <tr>
+              <td> <div id="pulse_area"></div></td>
+            </tr>
+            <tr>
+              <td><div id="pulse_width"></div></td>
+            </tr>
+            <tr>
+              <td> <div id="top_hitmap">Top:</div></td>
+              <td> <div id="color_scale"></div></td> 
+            </tr>
+            <tr>
+              <td><div id="bottom_hitmap">Bottom:</div></td>
+            </tr>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-md-12" align="center">
+        <button type="button" id="s1_button" class="btn btn-primary">S1</button>
+        <button type="button" id="sphe_button" class="btn btn-primary">SPHE</button>
+        <button type="button" id="s2_button" class="btn btn-primary">S2</button>
+        <button type="button" id="se_button" class="btn btn-primary">SE</button>
+        <button type="button" id="ms2_button" class="btn btn-primary">Multi S2</button>
+        <button type="button" id="gs2_button" class="btn btn-primary">Gas S2</button>
+        <button type="button" id="etrain_button" class="btn btn-primary">E-train</button>
+        <button type="button" id="eburp_button" class="btn btn-primary">E-burp</button>
+        <button type="button" id="rfrs1_button" class="btn btn-primary">RFR S1</button>
+        <button type="button" id="noise_button" class="btn btn-primary">Noise</button>
+        <button type="button" id="idunno_button" class="btn btn-primary">¯\_(ツ)_/¯</button>
+      </div>
+      <div class="col-md-12" align="center" style="margin:10px;">
+      pLUX is a project by James Morad at the University of California, Davis. For more information, please read the <a target="_blank" href="about">about</a> page.
+      </div>
+    </div>
+
+</div>
+
+<div  id="loading" class="container">
+  <div class="row">
+    <div class="col-md-8 col-md-offset-2">
+      <img class="center-block" src="/static/loading.gif" >
+    </div>
+  </div>
+</div>
+
+<script>
+  $(document).ready(function () {
+    get_event();
+    $("#main").hide();
+    $("#graph").click(function(e) {
+      //$("#graph").hide();
+      //$("#pods").show();
+    });
+    $("#pods").click(function(e) {
+      //$("#pods").hide();
+      //$("#graph").show();
+    });
+    $('#time_axis_form').change(function(){
+     redraw_event(); 
+    });
+    $("#more_button_div").show();
+    $("#less_button_div").show();
+
+
+  $(document).ajaxStart(function () {
+        $("#main").hide();
+        $("#loading").show();
+    }).ajaxStop(function () {
+    $("#loading").hide();
+    $("#main").show();
+    if($("#less_button_div").is(":visible")){
+      $("#more_button_div").hide();
+      $("#less_button_div").show();
+    }
+    else{
+      $("#less_button_div").hide();
+      $("#more_button_div").show();
+    }
+
+
+    });
+});
+
+
+$("#s1_button").click(function(){
+  json_response['classification'] =1;
+  json_response['email'] =$('#email').val();
+  json_response['username'] =$('#name').val();
+  json_response['notes'] =$('#notes').val();
+  $('#notes').val("");
+  delete json_response.times;
+  delete json_response.pulse;
+  send_classification(json_response);
+});
+$("#sphe_button").click(function(){
+  json_response['classification'] =3;
+  json_response['email'] =$('#email').val();
+  json_response['username'] =$('#name').val();
+  json_response['notes'] =$('#notes').val();
+  $('#notes').val("");
+  delete json_response.times;
+  delete json_response.pulse;
+  send_classification(json_response);
+});
+$("#s2_button").click(function(){
+  json_response['classification'] =2;
+  json_response['email'] =$('#email').val();
+  json_response['username'] =$('#name').val();
+  json_response['notes'] =$('#notes').val();
+  $('#notes').val("");
+  delete json_response.times;
+  delete json_response.pulse;
+  send_classification(json_response);
+});
+$("#se_button").click(function(){
+  json_response['classification'] =4;
+  json_response['email'] =$('#email').val();
+  json_response['username'] =$('#name').val();
+  json_response['notes'] =$('#notes').val();
+  $('#notes').val("");
+  delete json_response.times;
+  delete json_response.pulse;
+  send_classification(json_response);
+});
+$("#etrain_button").click(function(){
+  json_response['classification'] =5;
+  json_response['email'] =$('#email').val();
+  json_response['username'] =$('#name').val();
+  json_response['notes'] =$('#notes').val();
+  $('#notes').val("");
+  delete json_response.times;
+  delete json_response.pulse;
+  send_classification(json_response);
+});
+$("#eburp_button").click(function(){
+  json_response['classification'] =6;
+  json_response['email'] =$('#email').val();
+  json_response['username'] =$('#name').val();
+  json_response['notes'] =$('#notes').val();
+  $('#notes').val("");
+  delete json_response.times;
+  delete json_response.pulse;
+  send_classification(json_response);
+});
+$("#ms2_button").click(function(){
+  json_response['classification'] =7;
+  json_response['email'] =$('#email').val();
+  json_response['username'] =$('#name').val();
+  json_response['notes'] =$('#notes').val();
+  $('#notes').val("");
+  delete json_response.times;
+  delete json_response.pulse;
+  send_classification(json_response);
+});
+$("#gs2_button").click(function(){
+  json_response['classification'] =8;
+  json_response['email'] =$('#email').val();
+  json_response['username'] =$('#name').val();
+  json_response['notes'] =$('#notes').val();
+  $('#notes').val("");
+  delete json_response.times;
+  delete json_response.pulse;
+  send_classification(json_response);
+});
+  $("#rfrs1_button").click(function(){
+  json_response['classification'] =9;
+  json_response['email'] =$('#email').val();
+  json_response['username'] =$('#name').val();
+  json_response['notes'] =$('#notes').val();
+  $('#notes').val("");
+  delete json_response.times;
+  delete json_response.pulse;
+  send_classification(json_response);
+});
+ $("#noise_button").click(function(){
+  json_response['classification'] =10;
+  json_response['email'] =$('#email').val();
+  json_response['username'] =$('#name').val();
+  json_response['notes'] =$('#notes').val();
+  $('#notes').val("");
+  delete json_response.times;
+  delete json_response.pulse;
+  send_classification(json_response);
+});
+$("#idunno_button").click(function(){
+  json_response['classification'] =99;
+  json_response['email'] =$('#email').val();
+  json_response['username'] =$('#name').val();
+  json_response['notes'] =$('#notes').val();
+  $('#notes').val("");
+  delete json_response.times;
+  delete json_response.pulse;
+  send_classification(json_response);
+});
+$("#more_button").click(function(){
+  $("#rqs").show();
+  $("#more_button_div").hide();
+  $("#less_button_div").show();
+});
+$("#less_button").click(function(){
+  $("#rqs").hide();
+  $("#less_button_div").hide();
+  $("#more_button_div").show();
+});
+</script>
+</body>
